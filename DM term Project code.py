@@ -13,14 +13,16 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 
-
+# reading the credit card transaction csv file using pandas
 data = pd.read_csv("C:\\Users\\venka\\OneDrive\\Documents\\Downloads//creditcard.csv")
+#dropped the Time and Class variables as they were not influential in classification
 data.drop('Time', axis = 1, inplace = True)
 X = data.drop('Class', axis = 1).values
 Y = data['Class'].values
+# performed a train test split so we can evaluate the performance of the algorithms
 X_train, X_test, Y_train, Y_test=train_test_split(X, Y, test_size=0.2, random_state=42)
 
-
+# applied the decision tree algorithm to the dataset and computed the accuracy, precision, recall, and f1 score to evaluate the algorithms performance
 tree_model = DecisionTreeClassifier(criterion = 'entropy')
 tree_model.fit(X_train, Y_train)
 tree_yhat = tree_model.predict(X_test)
@@ -29,11 +31,11 @@ print("The accuracy of Decision Tree algorithm is " + str(accuracy_tree))
 print("Model Precision:", round(precision_score(Y_test, tree_yhat),4))
 print("Model Recall:", round(recall_score(Y_test, tree_yhat),4))
 print("F1 Score:", round(f1_score(Y_test, tree_yhat),4))
-tree_matrix = confusion_matrix(Y_test, tree_yhat, labels = [0, 1])
+tree_matrix = confusion_matrix(Y_test, tree_yhat, labels = [0, 1]) #printed a confusion matrix to visualize true and false positives as well as true and false negatives
 print(tree_matrix)
 
-
-knn = KNeighborsClassifier(n_neighbors = 5)
+# applied the KNN algorithm to the dataset and computed the accuracy, precision, recall, and f1 score to evaluate the algorithms performance
+knn = KNeighborsClassifier(n_neighbors = 5) #Set the nearest neighbors number as 5
 knn.fit(X_train, Y_train)
 knn_yhat = knn.predict(X_test)
 accuracy_knn = (accuracy_score(Y_test, knn_yhat)) * 100
@@ -41,9 +43,10 @@ print("The accuracy of KNN algorithm is " + str(accuracy_knn))
 print("Model Precision:", round(precision_score(Y_test, knn_yhat),4))
 print("Model Recall:", round(recall_score(Y_test, knn_yhat),4))
 print("F1 Score:", round(f1_score(Y_test, knn_yhat),4))
-knn_matrix = confusion_matrix(Y_test, knn_yhat, labels = [0, 1])
+knn_matrix = confusion_matrix(Y_test, knn_yhat, labels = [0, 1])  #printed a confusion matrix to visualize true and false positives as well as true and false negatives
 print(knn_matrix)
 
+# applied the logistic regression algorithm to the dataset and computed the accuracy, precision, recall, and f1 score to evaluate the algorithms performance
 lr = LogisticRegression()
 lr.fit(X_train, Y_train)
 lr_yhat = lr.predict(X_test)
@@ -52,9 +55,10 @@ print("The accuracy of Logistic Regression algorithm is " + str(accuracy_lr))
 print("Model Precision:", round(precision_score(Y_test, lr_yhat),4))
 print("Model Recall:", round(recall_score(Y_test, lr_yhat),4))
 print("F1 Score:", round(f1_score(Y_test, lr_yhat),4))
-lr_matrix = confusion_matrix(Y_test, lr_yhat, labels = [0, 1])
+lr_matrix = confusion_matrix(Y_test, lr_yhat, labels = [0, 1])  #printed a confusion matrix to visualize true and false positives as well as true and false negatives
 print(lr_matrix)
 
+# applied the support vector machine algorithm to the dataset and computed the accuracy, precision, recall, and f1 score to evaluate the algorithms performance
 svm = SVC()
 svm.fit(X_train, Y_train)
 svm_yhat = svm.predict(X_test)
@@ -63,7 +67,7 @@ print("The accuracy of SVM algorithm is" + str(accuracy_svm))
 print("Model Precision:", round(precision_score(Y_test, svm_yhat),4))
 print("Model Recall:", round(recall_score(Y_test, svm_yhat),4))
 print("F1 Score:", round(f1_score(Y_test, svm_yhat),4))
-svm_matrix = confusion_matrix(Y_test, svm_yhat, labels = [0, 1])
+svm_matrix = confusion_matrix(Y_test, svm_yhat, labels = [0, 1]) #printed a confusion matrix to visualize true and false positives as well as true and false negatives
 print(svm_matrix)
 
 
