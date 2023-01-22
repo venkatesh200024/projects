@@ -1,3 +1,10 @@
+# The dataset for this project was taken from this link: https://www.kaggle.com/mlg-ulb/creditcardfraud
+
+# The topic of credit craud fraud detection drew my interest because in the current day, cashless transactions are mainstream. Cash transactions are secondary to credit/debit card transactions. 
+# With this practice, fraudulent activities are also more prevalent. Fraudulent activities are detrimental to banks and customers hurting their bottom line. Every year tens of millions of dollars can be lost due to fraud. 
+# Because there are a number of ways to commit credit card fraud, such as stolen credit cards, data breaches, or mail intercepts, catching the small number of fraudulent activities can be tough, but is essential. 
+# I decided to use numerous classification algorithms, because we can not assume which fraudulent technique a person may use, so applying algorithms will allow us to better classify the transactions of the dataset.   
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.model_selection import train_test_split
