@@ -90,7 +90,10 @@ nadal_fit_nonhierarchical %>%
 ```
 
 
-creating a hierarchical model the effect of surface, 1st serve points won percentage is predicted by ace percentage, 1st serves in percentage, and the effect of surface. In 2013, Nadal played on hard court and clay court. Serving is generally more impactful on hard courts than on clay courts, so a grouping factor by surface may render a more accurate model. However, for a top 2 player like Nadal, his serving performance may still remain consistent across both surfaces.
+creating a hierarchical model the effect of surface, 1st serve points won percentage is predicted by ace percentage, 1st serves in percentage, and the effect of surface. 
+In 2013, Nadal played on hard court and clay court. 
+Serving is generally more impactful on hard courts than on clay courts, so a grouping factor by surface may render a more accurate model. 
+However, for a top 2 player like Nadal, his serving performance may still remain consistent across both surfaces.
 ```{r hierarchical model}
 nadal_fit <- stan_glmer(X1st. ~ A. + X1stIn + (1|Surface), data = nadal_data, adapt_delta = .999)
 ```
@@ -128,5 +131,8 @@ nadal_fit_loo <- loo(nadal_fit)
 nadal_fit_nonhierarchical_loo <- loo(nadal_fit_nonhierarchical)
 loo_compare(nadal_fit_loo, nadal_fit_nonhierarchical_loo)
 ```
-The comparison results indicate that the non hierarachical fit is the best model. So, the grouping effect of surface did not have a large impact on predicting 1st serve win percentage based on ace percentage and 1st serve in percentage in Nadal's 2013 season. This is plausible given how consistent Nadal's serve is known for being. If I ran this model for a player who's serve is the biggest strength of their game, such as 6'11 John Isner, then the grouping effect is likely to be more impactful.
+The comparison results indicate that the non hierarachical fit is the best model. 
+So, the grouping effect of surface did not have a large impact on predicting 1st serve win percentage based on ace percentage and 1st serve in percentage in Nadal's 2013 season. 
+This is plausible given how consistent Nadal's serve is known for being. 
+If I ran this model for a player who's serve is the biggest strength of their game, such as 6'11 John Isner, then the grouping effect is likely to be more impactful.
 
