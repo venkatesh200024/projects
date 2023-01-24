@@ -1,0 +1,138 @@
+---
+title: "Final Project"
+author: "Venkatesh Vasudevan"
+date: '2022-05-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(readxl)
+library(janitor)
+```
+
+```{r datasets}
+top_50_players_stats <- read_excel("top 50 players.xlsx")
+top_under_pressure_players <- read_excel("top under pressure players.xlsx")
+```
+
+These datasets are taken from two different websites relating to tennis statistics. The first dataset is from tennisabstract.com (https://www.tennisabstract.com/cgi-bin/leaders.cgi) and it provides in depth statistics about serve and return of just the top 50 players in the ATP rankings over the last year. The second dataset is from atptour.com (https://www.atptour.com/en/stats/leaderboard?boardType=pressure&timeFrame=52Week&surface=all&versusRank=all&formerNo1=false) and it provides statistics about how well a player does under pressure and has stats relevant to the calculation of this, including a generated "under pressure" rating. This dataset contains the top 101 players in the under pressure rating over the last year. I took the data from both these sites and pasted it into an excel file, with no modifications. Some cleaning will be required to work with the data. 
+
+```{r clean dataset}
+top_under_pressure_players <- top_under_pressure_players %>%
+  clean_names()
+
+top_50_players_stats <- top_50_players_stats %>%
+  clean_names()
+
+top_under_pressure_players <- top_under_pressure_players %>%
+  rename(under_pressure_standing = under_pressure_standing_c , under_pressure_rating = under_pressure_rating_c)
+
+top_50_players_stats <- top_50_players_stats %>%
+  mutate(player = str_split(player , '\\[')) %>%
+  mutate(player = map_chr(player,1)) %>%
+  mutate(player = str_trim(player))
+```
+Here, I modified the player name in the top 50 player data set so I can do a join with the under pressure dataset.I also cleaned up the names of the variables.
+
+```{r entire dataset join}
+top_50_and_under_pressure <- top_50_players_stats %>%
+  inner_join(top_under_pressure_players, by = "player")
+dim(top_50_and_under_pressure)
+```
+From this join, we can see that 46 of the top 50 players are in the top 101 players in under pressure rating. I expected most of the top 50 players to be in both lists. So, I would like to narrow the under pressure list to 60 to get an even better indication on who the strongest players are.
+
+```{r shortened dataset join }
+top_under_pressure_players <- head(top_under_pressure_players,60)
+
+top_50_and_under_pressure <- top_50_players_stats %>%
+  inner_join(top_under_pressure_players, by = "player")
+
+top_50_and_under_pressure <- top_50_and_under_pressure %>%
+  relocate(under_pressure_standing, .before = player)
+
+dim(top_50_and_under_pressure)
+```
+
+This join narrowed the list from 46 to 37 players, which I think is a good number of players to show what these players in both lists excel in. Examining these players' strengths will show which stats are most important in success. 
+
+```{r eliminate some variables}
+top_50_and_under_pressure <- top_50_and_under_pressure %>%
+  select(-spw_in_p, -m_w_l, -aces, -d_fs, -df_2s, -x2_percent_in_p, -pts_sg, -pts_l_sg, -rpw_in_p, -v_df_percent,     -ace_percent, -df_percent, -x1st_in, -x1st_percent, -x2nd_percent, -hld_percent, -v_ace_percent, -v1st_percent, -v2nd_percent, -brk_percent)
+
+top_50_and_under_pressure
+```
+
+Here, I am eliminating some statistics that will not be needed in examining the players or creating new variables.
+
+```{r average ranking variable}
+top_50_and_under_pressure <-  top_50_and_under_pressure %>%
+  mutate(rk = parse_number(rk)) %>%
+  mutate(average_ranking = (rk + under_pressure_standing)/2,.before = player) %>%
+  arrange(average_ranking)
+
+
+top_50_and_under_pressure
+
+```
+In this chunk, I took the players' world ranking and added the under pressure standing to it. Then I averaged the two and ordered the table in ascending value of the averaged ranking. The table shows that of the top 10 in this average ranking, the lowest world ranking is 15th. In the top 3 of this metric, 3 of the world's top 4 are in it as well. Therefore, it is clear that part of the reason these players are ranked so high is because of their ability under pressure. It is surprising to see that the world number 2 Medvedev is only 11th in the average ranking. I anticipate that he be top in some other categories to make up for this gap.
+
+```{r pts saved}
+top_50_and_under_pressure <- top_50_and_under_pressure %>%
+  mutate(service_success = (percent_break_points_saved + spw)/2) %>%
+  arrange(desc(service_success)) %>%
+  mutate(serve_rank = dense_rank(desc(service_success)))
+
+top_50_and_under_pressure
+```
+In this chunk, I took the percentage of break points saved by a player, which is a point on the player's serve where if they lose the point, they lose the game, and added it to the percentage of service points won by a player. Then I averaged the two to create a new variable that will help me determine how "clutch" a player's serve is in helping them win their points and escape pressure situations. Usually, the tall players are near the top in the serve statistics and the stat I created backs this, as 4 of the top 5 in the service success are 6"5 or higher. However, appearing in the top 10 are Federer(although he has a low rank, his match win percentage is still very high), Djokovic, and Nadal, who are not tall at all, but have perfected their serve to succeed in every situation. Appearing in the top 10 of a statistic that they theoretically shouldn't appear in shows why they are the 3 best of all time. The players that appear near the bottom of this ranking should appear closer to the top in return statistics and the players near the top of the service success stat should appear closer to the bottom, which I will examine next.
+
+```{r return stat}
+top_50_and_under_pressure <- top_50_and_under_pressure %>%
+  mutate(return_success = (percent_break_points_converted + rpw)/2) %>%
+  arrange(desc(return_success)) %>%
+  mutate(return_rank = dense_rank(desc(return_success)))
+
+top_50_and_under_pressure
+```
+In this chunk, I took the percentage of break points converted by a player, which is a point played where the returner can win the game if they win the point on the opponents serve, and added it to the percentage of return points won by a player. Then, I averaged the two to create a stat called return_success. The first thing I noticed was that 6 of the top 10 in the serve_success stat are in the bottom 10 of the return_success stat. This was what I expected, but it is still interesting to see that a player can be so strong in one area but comparatively weak in another area with their peers. As expected, the players at the bottom of the serve_success stat are near the top of the return_success stat.[Ex. Schwartzman is 2nd in this list but 3rd to last in the service stat] The main highlight in this stat is that Djokovic and Nadal are in the top 3 of this stat. Them being in the top 10 of both lists shows exactly why they are 2 of the greatest of all time contenders.
+
+```{r}
+top_50_and_under_pressure <-  top_50_and_under_pressure %>%
+  mutate(combined_service_return_ranking = (serve_rank + return_rank)) %>%
+  arrange(combined_service_return_ranking) %>%
+  relocate(combined_service_return_ranking, .before = m)
+
+top_50_and_under_pressure
+```
+In this chunk, I combined the rankings of the serve and return statistics I created to create a combined_ranking variable. I expected this ranking list to look similar to the actual world rankings and this was the case. Most of the top 10 are in the top 10 of this list as well. (Federer is only ranked low because of less matches than others) Djokovic and Nadal, with combined rankings of 7 and 12 respectively, are well ahead of the rest of the players. This combined ranking metric is generally pretty consistent with the actual rankings, with a few exceptions.
+
+```{r plot top 10}
+top_50_and_under_pressure %>%
+  head(10) %>%
+  ggplot(aes(service_success, return_success, colour = player)) +
+  geom_point()
+   
+```
+
+Here, I included a plot to visualize the top 10 players in my combined ranking metric and look at their service_success and return_success. The further top right the player is the better they are in this graph. Djokovic and Nadal are the standouts in this graph. As the serve success goes higher, the return success generally gets weaker. An interesting note is that Federer would've been up with the other 2 in previous years, but his return stats have declined over the years. So, while he's still good enough for the top 10, he is not on the very top at the moment.
+
+```{r plot bottom 10}
+top_50_and_under_pressure %>%
+  tail(10) %>%
+  ggplot(aes(service_success, return_success, colour = player)) +
+  geom_point()
+
+```
+
+In this chunk, I created a plot of the bottom 10 players in the 37 player ranking list I created. Their serve and return statistics are quite a bit lower to the top 10 players. Again, being in the top right of this graph is better. If these players can improve their numbers to match those of the top 10 players, then they will definitely rise up the world rankings.
+
+```{r write to csv}
+write_csv(top_50_and_under_pressure, "tennis-statistics.csv")
+```
+
+The final csv file is ordered by my combined ranking metric and gives a good indication on which players are strongest in which areas. As these are the top "under pressure" players, we can see what each player relies on more to escape pressure and succeed.
+
+On my honor, I have neither received nor given any unauthorized assistance on this assignment.
+
+Venkatesh Vasudevan
