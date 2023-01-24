@@ -27,7 +27,14 @@ options(mc.cores = parallel::detectCores())
 set.seed(1766)
 ```
 
-The dataset comes from a website called tennisabstract.com, which provides statistics for players on the professional tennis tour in any season. For this project, I decided to analyze Rafael Nadal's 2013 season serve statistics. Nadal was a top 5 player in the world throughout this season. I wanted to analyze a season in which he played a similar amount of matches on clay and hard courts. Nadal only played one match on a grass court in this season in which he was injured, so I did not include this in the dataset, but all other matches he played are included. The dataset contains serving statistics Ace percentage, double fault percentage, 1st serves made in percentage, 1st serve points won percentage, and second serve points won percentage. My goal was to analyze how ace percentage and 1st serves made in percentage would predict 1st serve points won percentage. I also wanted to include the effect of surface, as serving is known to be a little more effective on hard courts. However, for a player like Nadal, the surface might not matter as much.
+The dataset comes from a website called tennisabstract.com, which provides statistics for players on the professional tennis tour in any season. 
+For this project, I decided to analyze Rafael Nadal's 2013 season serve statistics. Nadal was a top 5 player in the world throughout this season. 
+I wanted to analyze a season in which he played a similar amount of matches on clay and hard courts. 
+Nadal only played one match on a grass court in this season in which he was injured, so I did not include this in the dataset, but all other matches he played are included. 
+The dataset contains serving statistics Ace percentage, double fault percentage, 1st serves made in percentage, 1st serve points won percentage, and second serve points won percentage. 
+My goal was to analyze how ace percentage and 1st serves made in percentage would predict 1st serve points won percentage. 
+I also wanted to include the effect of surface, as serving is known to be a little more effective on hard courts. 
+However, for a player like Nadal, the surface might not matter as much.
 ```{r read dataset}
 nadal_data <- read.csv('nadal.csv')
 ```
@@ -123,8 +130,3 @@ loo_compare(nadal_fit_loo, nadal_fit_nonhierarchical_loo)
 ```
 The comparison results indicate that the non hierarachical fit is the best model. So, the grouping effect of surface did not have a large impact on predicting 1st serve win percentage based on ace percentage and 1st serve in percentage in Nadal's 2013 season. This is plausible given how consistent Nadal's serve is known for being. If I ran this model for a player who's serve is the biggest strength of their game, such as 6'11 John Isner, then the grouping effect is likely to be more impactful.
 
-### Honor Pledge
-
-On my honor, I have neither received nor given any unauthorized assistance on this project.
-
-Venkatesh Vasudevan
