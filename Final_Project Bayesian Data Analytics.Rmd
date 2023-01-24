@@ -1,0 +1,130 @@
+---
+title: "BDA Final Project"
+author: "Venkatesh Vasudevan"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rstanarm)
+library(brms)
+library(bayesplot)
+library(bayestestR)
+library(tidybayes)
+library(parameters)
+library(patchwork)
+library(magrittr)
+library(lubridate)
+library(broom)
+library(broom.mixed)
+library(ggbeeswarm)
+library(loo)
+library(emmeans)
+
+options(mc.cores = parallel::detectCores())
+set.seed(1766)
+```
+
+The dataset comes from a website called tennisabstract.com, which provides statistics for players on the professional tennis tour in any season. For this project, I decided to analyze Rafael Nadal's 2013 season serve statistics. Nadal was a top 5 player in the world throughout this season. I wanted to analyze a season in which he played a similar amount of matches on clay and hard courts. Nadal only played one match on a grass court in this season in which he was injured, so I did not include this in the dataset, but all other matches he played are included. The dataset contains serving statistics Ace percentage, double fault percentage, 1st serves made in percentage, 1st serve points won percentage, and second serve points won percentage. My goal was to analyze how ace percentage and 1st serves made in percentage would predict 1st serve points won percentage. I also wanted to include the effect of surface, as serving is known to be a little more effective on hard courts. However, for a player like Nadal, the surface might not matter as much.
+```{r read dataset}
+nadal_data <- read.csv('nadal.csv')
+```
+
+creating a non hierarchical model without the effect of surface, 1st serve points won percentage is predicted by just ace percentage and 1st serves in percentage 
+```{r non hierarchical fit}
+nadal_fit_nonhierarchical <- stan_glm(X1st. ~ A. + X1stIn, data = nadal_data, adapt_delta = .999)
+```
+
+plotting trace plots for non hierarchical model
+```{r trace plot nonhierarchical}
+plot(nadal_fit_nonhierarchical, plotfun = "trace",pars = c("(Intercept)", "A.", "X1stIn", "sigma"))
+```
+running posterior predictive check
+```{r posterior predictive check non hierarchical}
+pp_check(nadal_fit_nonhierarchical)
+```
+Graphs of densities and posterior
+```{r pairs and fixed posteriors non hierarchical}
+plot(nadal_fit_nonhierarchical, plotfun = "areas", pars = "A.", prob = 0.9)
+plot(nadal_fit_nonhierarchical, plotfun = "areas", pars = "X1stIn", prob = 0.9)
+plot(nadal_fit_nonhierarchical, plotfun = "areas", pars = "(Intercept)", prob = 0.9)
+plot(nadal_fit_nonhierarchical, plotfun = "areas", pars = "sigma", prob = 0.9)
+
+
+
+plot(nadal_fit_nonhierarchical, plotfun = "pairs", pars = c("A.", "X1stIn", "(Intercept)", "sigma"))
+posterior_vs_prior(nadal_fit_nonhierarchical, pars = c("A.","X1stIn", "sigma"))
+```
+Describing the posterior numerically
+```{r describe posterior non hierarchical}
+describe_posterior(nadal_fit_nonhierarchical, centrality = 'Mean')
+```
+summary of the hierarchical model fit
+```{r summary non hierarchical }
+summary(nadal_fit_nonhierarchical, digits=3)
+```
+
+prediction for set of values using non hierarchical model
+```{r prediction non hierarchical }
+newdata = data.frame(A.= .073, X1stIn = .721)
+predict(nadal_fit_nonhierarchical, newdata = newdata)
+  
+```
+An Ace percentage of 7.3 percent and a 1st serve in percentage of 72.1 percent leads to a prediction of 75.5 percentage 1st serve points won
+
+
+What is the probability that the `A.` coefficient is greater than 0?
+```{r prob calc nonhierarchical}
+nadal_fit_nonhierarchical %>%
+  as.data.frame() %$%
+ mean(A. > 0)
+```
+
+
+creating a hierarchical model the effect of surface, 1st serve points won percentage is predicted by ace percentage, 1st serves in percentage, and the effect of surface. In 2013, Nadal played on hard court and clay court. Serving is generally more impactful on hard courts than on clay courts, so a grouping factor by surface may render a more accurate model. However, for a top 2 player like Nadal, his serving performance may still remain consistent across both surfaces.
+```{r hierarchical model}
+nadal_fit <- stan_glmer(X1st. ~ A. + X1stIn + (1|Surface), data = nadal_data, adapt_delta = .999)
+```
+```{r trace plot hierarchical}
+plot(nadal_fit, plotfun = "trace",pars = c("(Intercept)", "A.", "X1stIn", "sigma"))
+```
+```{r posterior predictive check hierarchical}
+pp_check(nadal_fit) 
+```
+
+Describing the posterior graphically and graphing densities
+```{r describe posterior graphically and graph densities hierarchical}
+plot(nadal_fit, plotfun = "areas", pars = "A.", prob = 0.9)
+plot(nadal_fit, plotfun = "areas", pars = "X1stIn", prob = 0.9)
+plot(nadal_fit, plotfun = "areas", pars = "(Intercept)", prob = 0.9)
+plot(nadal_fit, plotfun = "areas", pars = "sigma", prob = 0.9)
+
+
+
+plot(nadal_fit, plotfun = "pairs", pars = c("A.", "X1stIn", "(Intercept)", "sigma"))
+posterior_vs_prior(nadal_fit, pars = c("A.","X1stIn", "sigma"))
+```
+Describing the posterior numerically
+```{r describe posterior hierarchical}
+describe_posterior(nadal_fit, centrality = 'Mean')
+```
+summary of the hierarchical model fit
+```{r summary hierarchical}
+summary(nadal_fit, digits=3)
+```
+
+Using loo function to compare the two fits and see which model is a more effective model
+```{r loo comparison}
+nadal_fit_loo <- loo(nadal_fit)
+nadal_fit_nonhierarchical_loo <- loo(nadal_fit_nonhierarchical)
+loo_compare(nadal_fit_loo, nadal_fit_nonhierarchical_loo)
+```
+The comparison results indicate that the non hierarachical fit is the best model. So, the grouping effect of surface did not have a large impact on predicting 1st serve win percentage based on ace percentage and 1st serve in percentage in Nadal's 2013 season. This is plausible given how consistent Nadal's serve is known for being. If I ran this model for a player who's serve is the biggest strength of their game, such as 6'11 John Isner, then the grouping effect is likely to be more impactful.
+
+### Honor Pledge
+
+On my honor, I have neither received nor given any unauthorized assistance on this project.
+
+Venkatesh Vasudevan
